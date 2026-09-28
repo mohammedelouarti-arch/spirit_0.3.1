@@ -1,0 +1,47 @@
+evals:
+  - name: "bill_explain_charges_nga_to_dfcx"
+    tags: ["regression", "e2e", "billing", "fr-ca"]
+    session_start:
+      event: "session start"
+      variables:
+        NGA: "true"
+        brand: "Bell"
+        menu_type: "ivr_menu"
+        language_tmp: "fr-CA"
+        clid_tmp: "+18663102355"
+        tfn_tmp: "+19058743160"
+    wrapper_steps:
+      - {kind: "dtmf", input: "157", label: "tester_id"}
+      - {kind: "dtmf", input: "8000212355", label: "spoof_tfn"}
+      - {kind: "dtmf", input: "4169326321", label: "spoof_clid"}
+      - {kind: "text", input: "Non", label: "infobot_choice"}
+    identification_steps:
+      - {kind: "dtmf", input: "4169236321", label: "customer_identification"}
+      - {kind: "text", input: "Oui", label: "service_confirmation"}
+    steering_utterance: "Je ne comprends pas les frais supplémentaires sur ma facture."
+    expected_transfer:
+      environment: "projects/prj-nts-uat-va-dlgflw/locations/us-central1/agents/f9166dae-1a9a-479b-aab7-136b1d13e36a/environments/3db63fc6-2100-418c-bf21-51ef4cb2f45e"
+      route: "bill_explain_charges"
+      language: "fr-ca"
+      handoff_to: "post_steering"
+    autonomous_flow:
+      enabled: true
+      max_turns: 6
+      customer_goal: >
+        The customer sees unexpected extra charges on the latest bill and wants them
+        explained line by line, and to know whether they are recurring or one-time.
+      customer_profile: >
+        The customer speaks Canadian French, is mildly frustrated but polite,
+        answers clarifying questions with short sentences, and does not give
+        account numbers out loud.
+      stop_phrases:
+        - "au revoir"
+        - "bonne journée"
+        - "merci d'avoir appelé"
+        - "je vais vous transférer"
+    expected_conversation:
+      min_turns: 2
+      max_turns: 6
+      must_mention: ["frais"]
+      forbid_stop_reasons: ["max_turns", "empty_llm_response", "no_va_text"]
+      require_empty_user_turns: false

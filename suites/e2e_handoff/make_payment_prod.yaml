@@ -1,0 +1,160 @@
+evals:
+  - name: "payment_make_payment_nga_to_dfcx_prod"
+    tags: ["smoke", "e2e", "payment_prod", "fr-ca", "prod"]
+ 
+    session_start:
+      event: "session start"
+      variables:
+        NGA: "true"
+        brand: "Bell"
+        menu_type: "ivr_menu"
+        language_tmp: "fr-CA"
+        clid_tmp: "+18663102355"
+        tfn_tmp: "+19058743160"
+ 
+    identification_steps:
+      - kind: "dtmf"
+        input: "4169964712"
+        label: "customer_identification"
+ 
+      - kind: "text"
+        input: "Oui"
+        label: "service_confirmation"
+ 
+    steering_utterance: "je veux payer ma facture."
+ 
+    expected_transfer:
+      environment: "projects/gcp-it-prod-va-dlgflw/locations/us-central1/agents/2100cbd0-9b9a-4916-ab2b-79ca6d573534/environments/a9ca0078-36b2-4d76-a01c-8c95efd462c0"
+      route: "payment_make_payment"
+      language: "fr-ca"
+      handoff_to: "post_steering"
+ 
+ 
+    autonomous_flow:
+      enabled: true
+      max_turns: 20
+      #customer_goal: >
+       # The customer had a promotional offer that expired and wants to understand why,
+        #and whether another promotion, discount, or equivalent offer can be applied.
+      customer_goal: >
+          You are a Bell customer who wants to make a payment.
+          Follow the authentication flow presened by the VA
+          Whether authenticationsuceeds or fails, remains focus on making a payment and continue with the payment journey whenever the Va allows it
+      customer_profile: >
+        The customer speaks Canadian French, responds briefly and naturally,
+        cooperates with relevant questions, and stays focused on resolving the issue
+         You are the CUSTOMER, not the virtual assistant.
+         Respond only to what the VA is asking in the CURRENT turn.
+         Never anticipate the next authentication or payment step
+         
+          Follow these rules exactly:
+ 
+          AUTHENTICATION
+ 
+          - If the VA asks whether you have access to the phone number
+           associated with the account, respond exactly:
+             "Oui"
+ 
+             - If the VA asks where the verification code should be sent,
+              respond exactly:
+               "Le même numéro"
+              - Provide the OTP ONLY when the VA explicitly asks you to provide,
+               give, say, repeat, enter, or type the verification code respond exactly:
+                "581781"
+              - if the VA says that the SMS has been sent, but does NOT explicitly
+                ask for the verification code, DO NOT provide the OTP
+              - If the VA says that the SMS may take some time to arrive and asks
+                 you to let it know if you did not receive it or need more time,
+                 respond exactly:
+                  "Je l'ai reçu
+ 
+           - IMPORTANT: If the VA says that once you receive the code by
+              text message you can repeat it or enter it on your phone,
+              this means the VA is asking for the OTP.
+                Respond immediately and exactly:
+                "581781"
+ 
+              - If the VA asks again for the verification code,
+               respond exactly:
+                "581781"
+        - If asked for the four-digit account PIN or NIP, security PIN or NIP, or
+          personal identification number, respond with exactly and only: "2728"
+ 
+              - If the VA asks for the last 3 characters of the postal code,
+                respond exactly:
+                "2N1"
+ 
+              - If the VA asks for the account number, respond exactly:
+              "556746649"
+ 
+          AUTHENTICATION FAILURE
+ 
+            - If authentication fails, remain focused on the original goal:
+              making a payment.
+ 
+            - If the VA proposes another authentication method, follow it
+            using the authentication values defined above.
+ 
+            - If the VA continues the payment flow despite authentication
+            failure, continue with the payment flow.
+ 
+         PAYMENT
+ 
+          - If the VA asks for the credit card number, respond exactly:
+           "5261 2101 8065 7031"
+ 
+        - If the VA asks for the expiry date, respond exactly:
+          "03/29"
+ 
+        - If the VA asks for the CVV or security code, respond exactly:
+          "298"
+ 
+        - If the VA asks whether you want to pay the current total balance,
+          the full balance, the entire balance, or any specific balance amount,
+          always respond exactly:
+          "Non"
+ 
+        - IMPORTANT: Never agree to pay the full or current balance,
+          regardless of the amount mentioned by the VA.
+ 
+        - If the VA asks how much you want to pay, respond exactly:
+          "10 $"
+ 
+        - The payment amount for this test is ALWAYS 10 $.
+ 
+        - Never provide or agree to a payment amount greater than 10 $.
+ 
+        - If the VA suggests, recommends, confirms, or asks for a payment
+          amount greater than 10 $, reject that amount and respond exactly:
+          "10 $"
+ 
+        - If the VA asks again for the payment amount, respond exactly:
+          "10 $"
+ 
+        - If the VA tries multiple times to obtain a different payment amount,
+          continue responding exactly:
+          "10 $"
+ 
+        IMPORTANT BEHAVIOR
+ 
+        - Never invent authentication or payment information.
+        - Never provide information that the VA has not requested yet.
+        - Never change the customer's goal from making a payment.
+        - Never agree to pay the full balance.
+        - The maximum and only payment amount allowed for this testcase is 10 $.
+        - For OTP, postal code, account number, credit card, expiry date,
+          CVV, or payment amount requests, return only the required value
+          with no additional words.
+    stop_phrases:
+      - "au revoir"
+      - "bonne journée"
+      - "merci d'avoir appelé"
+      - "je vais vous transférer"
+      - "transfert vers un conseiller"
+    expected_conversation:
+    min_turns: 2
+    max_turns: 8
+    must_mention: ["paiement"]
+    must_not_mention: ["je ne comprends pas", "erreur système"]
+    forbid_stop_reasons: ["max_turns", "empty_llm_response", "no_va_text"]
+    require_empty_user_turns: false

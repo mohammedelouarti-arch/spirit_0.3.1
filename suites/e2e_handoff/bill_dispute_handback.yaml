@@ -1,0 +1,60 @@
+evals:
+  - name: "bill_dispute_handback_roundtrip"
+    tags: ["regression", "e2e", "billing", "handback", "fr-ca"]
+
+    session_start:
+      event: "session start"
+      variables:
+        clid_tmp: "5145550147"
+        tfn: "18663101211"
+        language: "fr-ca"
+
+    wrapper_steps:
+      - {kind: "dtmf", input: "157", label: "tester_id"}
+    identification_steps:
+      - {kind: "text", input: "Oui", label: "service_confirmation"}
+
+    steering_utterance: "Je veux contester un montant sur ma facture."
+
+    expected_transfer:
+      environment: "projects/prj-nts-uat-va-dlgflw/locations/us-central1/agents/f9166dae-1a9a-479b-aab7-136b1d13e36a/environments/3db63fc6-2100-418c-bf21-51ef4cb2f45e"
+      route: "bill_dispute_charge"
+      language: "fr-ca"
+      handoff_to: "post_steering"
+
+    autonomous_flow:
+      enabled: true
+      max_turns: 12
+      # Three stretches: DFCX (dispute) -> NGA (billing menu) -> DFCX (technical).
+      max_legs: 6
+      customer_goal: >
+        Dispute a charge on the bill; if sent back to the main menu, follow
+        whatever the assistant proposes until the call is finished.
+      customer_profile: >
+        Canadian French, brief and cooperative.
+      stop_phrases: ["au revoir", "merci d'avoir appel\u00e9"]
+
+    expected_conversation:
+      min_turns: 2
+      max_turns: 12
+      # The handback must NOT end the call -- NGA takes it and steers it back.
+      expect_handbacks: 1
+      expect_retransfers: 1
+      expect_legs: 3
+      forbid_stop_reasons:
+        - "handback_to_nga"        # the 0.3.x bug: handback treated as terminal
+        - "handback_unsupported"
+        - "no_match_loop"          # re-entry sent text and stranded on Trigger NGA
+        - "va_repeated"            # rotating no-match prompts masquerading as progress
+        - "max_legs"
+        - "max_turns"
+        - "empty_llm_response"
+        - "no_va_text"
+      expected_handback:
+        transferToNga: "projects/prj-nts-uat-va-dlgflw/locations/us/apps/5d884fb6-d176-4b8d-858c-0d7cf78adb9c"
+        handoff_from: "bill_dispute_charge"
+        handoff_to: "billing_menu"
+      expected_retransfer:
+        route: "tech_internet_outage"
+        handoff_to: "post_handback"
+      require_empty_user_turns: false

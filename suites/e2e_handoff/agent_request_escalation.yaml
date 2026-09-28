@@ -1,0 +1,67 @@
+evals:
+  # Escalation path: the caller asks for a human immediately. This case exists to
+  # prove the runner stops on `live_agent_handoff` rather than burning max_turns.
+  - name: "agent_request_escalation_nga_to_dfcx"
+    tags: ["regression", "e2e", "escalation", "fr-ca"]
+    session_start:
+      event: "session start"
+      variables:
+        NGA: "true"
+        brand: "Bell"
+        menu_type: "ivr_menu"
+        language_tmp: "fr-CA"
+        clid_tmp: "+18663102355"
+        tfn_tmp: "+19058743160"
+    wrapper_steps:
+      - {kind: "dtmf", input: "157", label: "tester_id"}
+      - {kind: "dtmf", input: "8000212355", label: "spoof_tfn"}
+      - {kind: "dtmf", input: "4169326321", label: "spoof_clid"}
+      - {kind: "text", input: "Non", label: "infobot_choice"}
+    identification_steps:
+      - {kind: "dtmf", input: "4169236321", label: "customer_identification"}
+      - {kind: "text", input: "Oui", label: "service_confirmation"}
+    steering_utterance: "Je veux parler à un conseiller s'il vous plaît."
+    expected_transfer:
+      environment: "projects/prj-nts-uat-va-dlgflw/locations/us-central1/agents/f9166dae-1a9a-479b-aab7-136b1d13e36a/environments/3db63fc6-2100-418c-bf21-51ef4cb2f45e"
+      route: "agent_request"
+      language: "fr-ca"
+      handoff_to: "post_steering"
+    autonomous_flow:
+      enabled: true
+      max_turns: 4
+      customer_goal: >
+        The customer wants to be transferred to a human advisor and will not accept
+        self-service options.
+      customer_profile: >
+        The customer speaks Canadian French, is firm but polite, and repeats the
+        request for an advisor if offered anything else.
+      stop_phrases:
+        - "je vais vous transférer"
+        - "transfert vers un conseiller"
+        - "au revoir"
+    expected_conversation:
+      max_turns: 4
+      expect_stop_reason: "stop_phrase"
+      forbid_stop_reasons: ["max_turns", "empty_llm_response"]
+
+  # Negative control: handoff assertions only, Ollama never invoked.
+  - name: "bill_promo_expired_handoff_only"
+    tags: ["smoke", "e2e", "billing", "handoff-only", "fr-ca"]
+    session_start:
+      event: "session start"
+      variables:
+        NGA: "true"
+        brand: "Bell"
+        language_tmp: "fr-CA"
+    wrapper_steps:
+      - {kind: "dtmf", input: "157", label: "tester_id"}
+    identification_steps:
+      - {kind: "text", input: "Oui", label: "service_confirmation"}
+    steering_utterance: "J'essaie de régler une offre promotionnelle qui est expirée."
+    expected_transfer:
+      environment: "projects/prj-nts-uat-va-dlgflw/locations/us-central1/agents/f9166dae-1a9a-479b-aab7-136b1d13e36a/environments/3db63fc6-2100-418c-bf21-51ef4cb2f45e"
+      route: "bill_promo_expired"
+      language: "fr-ca"
+      handoff_to: "post_steering"
+    autonomous_flow:
+      enabled: false

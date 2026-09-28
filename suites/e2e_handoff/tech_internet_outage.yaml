@@ -1,0 +1,104 @@
+evals:
+  - name: "tech_internet_outage_nga_to_dfcx_prod"
+    tags: ["smoke", "e2e", "technical", "fr-ca", "prod"]
+
+    session_start:
+      event: "session start"
+      variables:
+        NGA: "true"
+        brand: "Bell"
+        menu_type: "ivr_menu"
+        language_tmp: "fr-CA"
+        clid_tmp: "+18663102355"
+        tfn_tmp: "+19058743160"
+
+    identification_steps:
+      - kind: "dtmf"
+        input: "4169964712"
+        label: "customer_identification"
+
+      - kind: "text"
+        input: "Oui"
+        label: "service_confirmation"
+
+    steering_utterance: "Mon internet ne fonctionne pas."
+
+    expected_transfer:
+      environment: "projects/gcp-it-prod-va-dlgflw/locations/us-central1/agents/2100cbd0-9b9a-4916-ab2b-79ca6d573534/environments/a9ca0078-36b2-4d76-a01c-8c95efd462c0"
+      route: "tech_connection_issue"
+      language: "fr-ca"
+      handoff_to: "post_steering"
+
+    autonomous_flow:
+      enabled: true
+      max_turns: 14
+
+      customer_goal: >
+        The customer's home internet is not working. They want to fix the issue.
+
+      customer_profile: >
+        The customer speaks Canadian French and answers each VA question briefly
+        and directly. Consider only the VA's most recent turn when choosing a
+        response. Do not anticipate future questions or provide information that
+        was not explicitly requested.
+
+        Follow these rules strictly after the steering utterance:
+        - If asked whether you have access to the mobile phone or mobile number
+          associated with the account, respond with exactly: "Oui"
+        - If asked which phone number the verification code should be sent to,
+          respond with exactly: "Le même numéro"
+        - If asked which phone number we can contact you in case we need to reach you,
+          respond with exactly: "4169964712"
+        - If asked for the four-digit account PIN or NIP, security PIN or NIP, or
+          personal identification number, respond with exactly and only: "2728"
+        - If asked whether you want to reuse the phone number already provided,
+          respond with exactly: "Oui"
+        - If explicitly asked for the six-digit verification code or OTP that was
+          received, respond with exactly: "581781"
+        - If asked whether you want the installation of a new product or the repair
+          of an existing product, respond with exactly: "La réparation d’un produit existant"
+        - If asked whether the modem has already been rebooted or restarted,
+          respond with exactly: "Oui"
+        - If offered a notification about the service issue or outage, respond
+          with exactly: "Oui"
+        - If asked whether the internet service is currently working, respond
+          with exactly: "Non"
+        - If asked when the issue started, respond with exactly:
+          "Depuis ce matin"
+        - For any other question, provide one brief and relevant answer in
+          Canadian French based only on the most recent VA question.
+
+        Response separation rules:
+        - Answer only one question per turn.
+        - Never provide the OTP unless the VA explicitly asks for a six-digit code.
+        - Never provide the PIN unless the VA explicitly asks for a four-digit PIN.
+        - Never use "581781" as a phone number.
+        - Never provide the OTP and PIN in the same response.
+        - Never combine a phone-access confirmation with an OTP or PIN.
+        - Do not repeat information from previous responses unless the VA asks
+          for it again.
+        - Do not add explanations, greetings, or extra information to an exact
+          response defined above.
+
+        Empty-turn rules:
+        - If the VA asks the customer to wait, indicates that it is still checking
+          something, or sends only silence SSML such as
+          '<speak><break time="5s"/></speak>', respond with exactly: "[EMPTY]"
+        - Do not use "[EMPTY]" if the VA asks a question or requests information
+          in the same turn.
+        - If a turn contains both a wait message and a question, answer the question.
+        - Never output the words "zero characters", "empty response", or "silence".
+
+      stop_phrases:
+        - "au revoir"
+        - "bonne journée"
+        - "merci d'avoir appelé"
+        - "je vais vous transférer"
+
+    expected_conversation:
+      min_turns: 1
+      max_turns: 40
+      forbid_stop_reasons:
+        - "max_turns"
+        - "empty_llm_response"
+      require_empty_user_turns: false

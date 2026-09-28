@@ -1,0 +1,35 @@
+staging:
+  app_name: "projects/prj-nts-uat-va-dlgflw/locations/us/apps/5d884fb6-d176-4b8d-858c-0d7cf78adb9c"
+  flow_agent_id: "projects/prj-nts-uat-va-dlgflw/locations/us-central1/agents/f9166dae-1a9a-479b-aab7-136b1d13e36a"
+  flow_environment: "projects/prj-nts-uat-va-dlgflw/locations/us-central1/agents/f9166dae-1a9a-479b-aab7-136b1d13e36a/environments/3db63fc6-2100-418c-bf21-51ef4cb2f45e"
+  language_code: "fr-CA"
+  creds_path: null
+
+  # Bound into the DFCX session as `nga_agent_id` on the inbound hop, so the
+  # `Trigger NGA` payload can resolve `$session.params.nga_agent_id` into a
+  # real app instead of passing the literal through. Defaults to `app_name`;
+  # set explicitly if the handback target differs from the steering app.
+  nga_app_name: "projects/prj-nts-uat-va-dlgflw/locations/us/apps/5d884fb6-d176-4b8d-858c-0d7cf78adb9c"
+  nga_agent_id_param: "nga_agent_id"
+
+  # Telephony assigns `call_id` on real calls; a SCRAPI-driven session has none,
+  # which leaves `call_id` / `call_id_ref` as unresolved literals in DFCX
+  # session state. Leave null to derive a stable numeric id from the session id.
+  call_id: null
+  call_id_param: "call_id"
+
+prod:
+  app_name: "projects/gcp-it-prod-va-dlgflw/locations/us/apps/06199ff5-b708-4058-bff8-59a82ae070a1"
+  flow_agent_id: "projects/gcp-it-prod-va-dlgflw/locations/us-central1/agents/2100cbd0-9b9a-4916-ab2b-79ca6d573534"
+  flow_environment: "projects/gcp-it-prod-va-dlgflw/locations/us-central1/agents/2100cbd0-9b9a-4916-ab2b-79ca6d573534/environments/a9ca0078-36b2-4d76-a01c-8c95efd462c0"
+  language_code: "fr-CA"
+  creds_path: null
+
+  # Production NGA handback configuration.
+  # This app resource is bound to the DFCX session as `nga_agent_id`.
+  nga_app_name: "projects/gcp-it-prod-va-dlgflw/locations/us/apps/06199ff5-b708-4058-bff8-59a82ae070a1"
+  nga_agent_id_param: "nga_agent_id"
+
+  # Telephony assigns `call_id` on real calls; a
+  call_id: null
+  call_id_param: "call_id"
